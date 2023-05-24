@@ -40,6 +40,9 @@ public class HelloController implements Initializable {
     private TextField androidvTF;
 
     @FXML
+    private Button backBtnForm1;
+
+    @FXML
     private TextField cpcsTF;
 
     @FXML
@@ -67,6 +70,9 @@ public class HelloController implements Initializable {
     private Pane formStep2;
 
     @FXML
+    private Button homeBtn;
+
+    @FXML
     private TextField iosvTF;
 
     @FXML
@@ -88,7 +94,13 @@ public class HelloController implements Initializable {
     private Button submitbtn;
 
     @FXML
+    private Pane sucessScreen;
+
+    @FXML
     private Button toggleExtensionSubmitBTN;
+
+    @FXML
+    private Button toggleExtensionSubmitBTN1;
 
     @FXML
     private TextField toggleNameTF;
@@ -100,37 +112,135 @@ public class HelloController implements Initializable {
     private ChoiceBox<String> toggleStateTF;
 
     @FXML
-    private ChoiceBox<?> toggleStoriesTF;
+    private TextField toggleStoryTF;
 
     @FXML
     private Button toggleSubmitBTN;
 
     @FXML
     private TextField toggleTypeTF;
+
+    @FXML
+    void handleBackBtnClickForm2(ActionEvent event) {
+        landing.setVisible(false);
+        formStep1.setVisible(true);
+        formStep2.setVisible(false);
+        sucessScreen.setVisible(false);
+    }
+
+    @FXML
+    void handleClickAnotherToggle(ActionEvent event) {
+        landing.setVisible(true);
+        formStep1.setVisible(false);
+        formStep2.setVisible(false);
+        sucessScreen.setVisible(false);
+        rootpath.setText("");
+        toggleNameTF.setText("");
+        toggleServiceNameTF.setText("");
+        descriptionTF.setText("");
+        toggleTypeTF.setText("");
+        toggleStoryTF.setText("");
+        toggleStateTF.setVisible(false);
+        // rootpath.setText("");
+    }
+
+    @FXML
+    void handlebackButtonForm1Click(ActionEvent event) {
+        landing.setVisible(true);
+        formStep1.setVisible(false);
+        formStep2.setVisible(false);
+        sucessScreen.setVisible(false);
+    }
     @FXML
     void handleCreateToggle(ActionEvent event) {
+        String toggleNameSlug = generateSlug(toggleNameTF.getText());
 
-        String txt = MessageFormat.format("{0}:\nstate:{1}\ndescription:{2}\nstories:\n{3}\nx-toggle-extensions:", toggleNameTF.getText(),toggleStateTF.getValue(), descriptionTF.getText(),toggleStoriesTF.getValue());
-        String location = paths.getAbsolutePath(rootpath.getText(), paths.MobileYAMLFilePath);
-        try {
-            Path filePath = Path.of(location);
-
-            List<String> lines = Files.readAllLines(filePath);
-
-            List<String> modifiedLines = lines.stream()
-                    .map(line -> line.replace("// Automate here -1", txt+"\n // Automate here -1"))
-                    .collect(Collectors.toList());
-
-            Files.write(filePath, modifiedLines, StandardOpenOption.TRUNCATE_EXISTING);
-
-            landing.setVisible(false);
-            formStep1.setVisible(false);
-            formStep2.setVisible(false);
-        } catch (IOException e) {
-            System.err.println("An error occurred while reading or writing to the file: " + e.getMessage());
-            errorRootPathTxt.setText("Something went wrong!");
+        // Mobile.yaml file
+        String mobileYamlText = MessageFormat.format("{0}:\n    state: {1}\n    description: \n     stories:\n", toggleNameSlug,toggleStateTF.getValue(), descriptionTF.getText());
+        String[] stories = toggleStoryTF.getText().split(",");
+        for(String story : stories) {
+            mobileYamlText+=MessageFormat.format("      - {0}\n", story);
         }
+        mobileYamlText += MessageFormat.format("    x-toggle-extensions:\n", 1);
+        if (sessionModifiableCB.getText() != null) {
+            mobileYamlText += MessageFormat.format("        sessionModifiable: {0}\n", sessionModifiableCB.getText());
+        }
+        if (toggleTypeTF.getText() != null) {
+            mobileYamlText += MessageFormat.format("        toggleType: {0}\n", toggleTypeTF.getText());
+        }if (iosvTF.getText() != null) {
+            mobileYamlText += MessageFormat.format("        iosAppVersion: {0}\n", iosvTF.getText());
+        }if (ipadvTF.getText() != null) {
+            mobileYamlText += MessageFormat.format("        ipadAppVersion: {0}\n", ipadvTF.getText());
+        }if (androidvTF.getText() != null) {
+            mobileYamlText += MessageFormat.format("        androidAppVersion: {0}\n", androidvTF.getText());
+        }if (startDateDF.getValue() != null) {
+            mobileYamlText += MessageFormat.format("        startDate: {0}\n", startDateDF.getValue().toString());
+        }if (endDateDF.getValue() != null) {
+            mobileYamlText += MessageFormat.format("        endDate: {0}\n", endDateDF.getValue().toString());
+        }if (cpcsTF.getText() != null) {
+            mobileYamlText += MessageFormat.format("        cpcs: {0}\n", cpcsTF.getText());
+        }if (customDescTF.getText() != null) {
+            mobileYamlText += MessageFormat.format("        customPropertyDesc: {0}\n", customDescTF.getText());
+        }if (customValueTF.getText() != null) {
+            mobileYamlText += MessageFormat.format("        customPropertyValue: {0}\n", customValueTF.getText());
+        }
+        String mobileYamlLocation = paths.getAbsolutePath(rootpath.getText(), paths.MobileYAMLFilePath);
+        CodeTemplate.setTemplate(mobileYamlLocation,mobileYamlText);
+
+
+        // Mobile Context Toggle
+        String mobileContextToggleText = MessageFormat.format("<bean class=“com.barclaycardus.svc.mobile.util.toggles.ToggleItem” id=“id_{0}” >\n   <property name=“name” value=“{0}“/>\n   <property name=“on” value=“{1}“/>\n    <property name=“description” value=“{2}“/>\n   <property name=“storyId” value=“{3}“/>\n   <property name=“toggleType” value=“{4}“/>\n", toggleNameSlug, sessionModifiableCB.getText(), descriptionTF.getText(),  toggleStoryTF.getText(), toggleTypeTF.getText());
+        if (cpcsTF.getText() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“cpcs” value=“{0}“/>\n", cpcsTF.getText());
+        }
+        if (iosvTF.getText() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“iosAppVersion” value=“{0}“/>\n", iosvTF.getText());
+        }     if (ipadvTF.getText() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“ipadAppVersion”  value=“{0}“/>\n", ipadvTF.getText());
+        }     if (androidvTF.getText() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“androidAppVersion”  value=“{0}“/>\n", androidvTF.getText());
+        }     if (toggleServiceNameTF.getText() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“serviceNames”  value=“{0}“/>\n", toggleServiceNameTF.getText());
+        }    if (customValueTF.getText() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“customPropertyValue”   value=“{0}“/>\n", customValueTF.getText());
+        }    if (customDescTF.getText() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“customPropertyDesc”   value=“{0}“/>\n", customDescTF.getText());
+        } if (startDateDF.getValue() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“startDate”    value=“{0}“/>\n", startDateDF.getValue().toString());
+        } if (endDateDF.getValue() != null) {
+            mobileContextToggleText += MessageFormat.format("   <property name=“endDate”   value=“{0}“/>\n", endDateDF.getValue().toString());
+        }
+        mobileContextToggleText+="</bean>\n";
+        String mobileContextToggleLocation = paths.getAbsolutePath(rootpath.getText(), paths.MobileContextToggleFilePath);
+        CodeTemplate.setTemplate(mobileContextToggleLocation,mobileContextToggleText);
+
+        //toggleEnumFile
+        String mobileToggleEnumText = MessageFormat.format("{0},\n", toggleNameSlug.toUpperCase());
+        String mobileToggleEnumLocation = paths.getAbsolutePath(rootpath.getText(), paths.MobileContextToggleFilePath);
+        CodeTemplate.setTemplate(mobileToggleEnumLocation,mobileToggleEnumText );
+
+        //toggleHelper
+        String mobileToggleHelperText = MessageFormat.format("public static final String {0}=\"{1}\";\n", toggleNameSlug.toUpperCase(), toggleNameSlug);
+        String mobileToggleHelperLocation = paths.getAbsolutePath(rootpath.getText(), paths.ToggleHelperFilePath);
+        CodeTemplate.setTemplate(mobileToggleHelperLocation,mobileToggleHelperText );
+
+        //feature yaml file
+        if (featureActiveCB.getText() == "true") {
+            String featureYamlText = MessageFormat.format("    - featureToggleName: {0}\n",toggleNameSlug);
+            String featureYamlLocation = paths.getAbsolutePath(rootpath.getText(), paths.FeaturesFilePath);
+            CodeTemplate.setTemplate(featureYamlLocation,featureYamlText );
+        }
+        //account config facade
+        String accountConfigFacadeFileText = MessageFormat.format("financialToolsVO.setManageAlertsFeatureToggleEnabled(isAppVersionSupported(userAppVersion, supportedAppVersion, ToggleHelper.{0}));", toggleNameSlug.toUpperCase());
+        String accountConfigFacadeLocation = paths.getAbsolutePath(rootpath.getText(), paths.AccountConfigFacadeFilePath);
+        CodeTemplate.setTemplate(accountConfigFacadeLocation,accountConfigFacadeFileText );
+        // Logic to add text to all the files
+        landing.setVisible(false);
+        formStep1.setVisible(false);
+        formStep2.setVisible(false);
+        sucessScreen.setVisible(true);
     }
+
 
 
     @FXML
@@ -150,6 +260,8 @@ public class HelloController implements Initializable {
             landing.setVisible(false);
             formStep2.setVisible(false);
             formStep1.setVisible(true);
+            sucessScreen.setVisible(false);
+
         }
         else {
             // setting error for wrong path
@@ -165,12 +277,14 @@ public class HelloController implements Initializable {
 
         System.out.println(toggleNameTF.getText());
         System.out.println(toggleStateTF.getValue());
-        System.out.println(toggleStoriesTF.getValue());
+
         System.out.println(descriptionTF.getText());
 
         landing.setVisible(false);
         formStep1.setVisible(false);
         formStep2.setVisible(true);
+        sucessScreen.setVisible(false);
+
 
     }
 
@@ -180,6 +294,8 @@ public class HelloController implements Initializable {
         landing.setVisible(true);
         formStep1.setVisible(false);
         formStep2.setVisible(false);
+        sucessScreen.setVisible(false);
+
 
     }
 }
